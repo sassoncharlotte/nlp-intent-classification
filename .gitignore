@@ -1,2 +1,6 @@
 cardiffnlp
 .ipynb_checkpoints
+data
+cache_dir
+outputs
+runs
