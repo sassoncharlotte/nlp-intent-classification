@@ -75,6 +75,8 @@ class ProcessGoEmotions:
         self.df = self.df[["text", "emotions", "emotion_category"]].copy()
 
     def define_label(self):
+        assert self.label_choice in self.df.columns, "Label choice must be emotions or emotion_category."
+
         self.df.rename({self.label_choice: "label"}, inplace=True, axis = 1)
         self.df = self.df[["text", "label"]].copy()
 
