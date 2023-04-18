@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 
 
-class Model:
+class TransformersModel:
     def __init__(
             self,
             optimizer_name,
