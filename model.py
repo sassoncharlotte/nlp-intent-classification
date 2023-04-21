@@ -63,13 +63,14 @@ class TransformersModel:
                 self.optimizer.step()
                 self.lr_scheduler.step()
                 self.optimizer.zero_grad()
-                progress_bar.set_postfix({"loss": loss})
+                progress_bar.set_postfix({"loss": loss.item()})
                 progress_bar.update(1)
 
 
     def evaluate(self, metric = "accuracy"):
         metric = evaluate.load(metric)
         self.model.eval()
+        progress_bar = tqdm(range(len(self.eval_dataloader)))
         for batch in self.eval_dataloader:
             batch = {k: v.to(self.device) for k, v in batch.items()}
             with torch.no_grad():
@@ -78,5 +79,25 @@ class TransformersModel:
             logits = outputs.logits
             predictions = torch.argmax(logits, dim=-1)
             metric.add_batch(predictions=predictions, references=batch["labels"])
+            # progress_bar.set_postfix({f"{metric}": metric.compute()})
+            progress_bar.update(1)
 
         return metric.compute()
+
+
+    def predict(self):
+        all_predictions, all_references = [], []
+        self.model.eval()
+        progress_bar = tqdm(range(len(self.eval_dataloader)))
+        for batch in self.eval_dataloader:
+            batch = {k: v.to(self.device) for k, v in batch.items()}
+            with torch.no_grad():
+                outputs = self.model(**batch)
+
+            logits = outputs.logits
+            predictions = torch.argmax(logits, dim=-1)
+            all_predictions += list(predictions.numpy())
+            all_references += list(batch["labels"].numpy())
+            progress_bar.update(1)
+
+        return all_predictions, all_references

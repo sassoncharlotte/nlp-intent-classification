@@ -5,7 +5,6 @@ from transformers import AutoTokenizer
 from typing import List
 
 
-
 class ProcessGoEmotions:
     positive = [
         'admiration','amusement', 'approval', 'caring',
@@ -81,14 +80,12 @@ class ProcessGoEmotions:
         self.df = self.df[["text", "label"]]
 
     def split_dataset(self, test_size: float = 0.2):
-        train, test = train_test_split(self.df, test_size=test_size, random_state=42) #, stratify=self.df.label)
+        train, test = train_test_split(self.df, test_size=test_size, stratify=self.df.label, random_state=42,)
         train.reset_index(drop=True, inplace=True)
         test.reset_index(drop=True, inplace=True)
+        return train, test
 
-        train_dataset = Dataset.from_pandas(train)
-        test_dataset = Dataset.from_pandas(test)
 
-        return train_dataset, test_dataset
 
 
 
