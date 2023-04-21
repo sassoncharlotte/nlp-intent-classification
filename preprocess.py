@@ -44,8 +44,8 @@ class ProcessGoEmotions:
                 self.df = df
                 empty = False
             else:
-                self.df = pd.concat([self.df, df], axis=1)
-    
+                self.df = pd.concat([self.df, df], axis=0)
+
     def get_mapping(self):
         labels = ProcessGoEmotions.positive + ProcessGoEmotions.negative + \
             ProcessGoEmotions.ambiguous + ProcessGoEmotions.neutral
@@ -76,12 +76,12 @@ class ProcessGoEmotions:
 
     def define_label(self):
         assert self.label_choice in self.df.columns, "Label choice must be emotions or emotion_category."
-
+    
         self.df.rename({self.label_choice: "label"}, inplace=True, axis = 1)
-        self.df = self.df[["text", "label"]].copy()
+        self.df = self.df[["text", "label"]]
 
     def split_dataset(self, test_size: float = 0.2):
-        train, test = train_test_split(self.df, test_size=test_size, random_state=42)
+        train, test = train_test_split(self.df, test_size=test_size, random_state=42) #, stratify=self.df.label)
         train.reset_index(drop=True, inplace=True)
         test.reset_index(drop=True, inplace=True)
 
