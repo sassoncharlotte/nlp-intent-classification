@@ -1,7 +1,7 @@
 from torch.optim import AdamW
 import evaluate
 import torch
-from transformers import AutoModelForSequenceClassification, get_scheduler
+from transformers import AutoModelForSequenceClassification, get_scheduler, RobertaModel
 from tqdm.auto import tqdm
 
 
@@ -44,6 +44,7 @@ class TransformersModel:
     
     def load_model(self, num_labels, model_name="bert-base-cased"):
         model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
+        # model = RobertaModel.from_pretrained(model_name, num_labels=num_labels)
 
         # Freeze all layers except for the last one
         for name, param in model.named_parameters():

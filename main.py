@@ -29,15 +29,14 @@ NUM_EPOCHS = 1
 BATCH_SIZE = 32
 NUM_INSTANCES = 500
 
+# Class imbalance-addressing methods (change *ONE* of these values to True to implement the approach)
+CLASS_WEIGHTING = False
+WEIGHTED_RANDOM_SAMPLING = True
 
 if __name__ == "__main__":
     # Loading train and test DataFrames
     process = ProcessGoEmotions(label_choice=LABEL)
     train, test = process.get_datasets(paths=PATHS, test_size = 0.2)
-
-    class_weights = compute_class_weight('balanced', classes=train['label'].unique(), y=train['label'])
-    # print('class_weights', class_weights)
-    class_weights = torch.from_numpy(class_weights).float()
 
     # Converting to datasets
     train_dataset = datasets.Dataset.from_pandas(train)
@@ -49,18 +48,29 @@ if __name__ == "__main__":
     tonekizer = TokenizeDataset(test_dataset)
     tokenized_test = tonekizer.tokenize_process(tokenizer_name=TOKENIZER_NAME)
 
-    # Subsampling datasets
+    # Subsampling datasets (IMPORTANT: make sure all classes are represented in these subsampled datasets)
     small_train_dataset = tokenized_train.shuffle(seed=42).select(range(NUM_INSTANCES))
     small_eval_dataset = tokenized_test.shuffle(seed=42).select(range(NUM_INSTANCES))
 
-    # emotion_dataset = WeightedDataset(texts, labels, class_weights)
+    if CLASS_WEIGHTING or WEIGHTED_RANDOM_SAMPLING:
 
-    # Creating sampler
-    # sampler = WeightedRandomSampler(weights=emotion_dataset.class_weights, num_samples=len(emotion_dataset), replacement=True)
+        # Computing class weights
+        class_weights = compute_class_weight('balanced', classes=train['label'].unique(), y=train['label'])
+        class_weights = torch.from_numpy(class_weights).float()
 
-    # Creating dataloader
-    train_dataloader = DataLoader(small_train_dataset, shuffle=True, batch_size=BATCH_SIZE) #, sampler=sampler)
-    eval_dataloader = DataLoader(small_eval_dataset, batch_size=BATCH_SIZE) #, sampler=sampler)
+        # Creating sampler
+        sampler = WeightedRandomSampler(
+            weights=class_weights, num_samples=len(small_train_dataset), replacement=True
+        )
+
+    if WEIGHTED_RANDOM_SAMPLING:
+        # Creating dataloader
+        train_dataloader = DataLoader(small_train_dataset, sampler=sampler, batch_size=BATCH_SIZE)  # if training WITH weighted random sampling
+    else:
+        # Creating dataloader
+        train_dataloader = DataLoader(small_train_dataset, shuffle=True, batch_size=BATCH_SIZE)  # if training WITHOUT weighted random sampling
+    
+    eval_dataloader = DataLoader(small_eval_dataset, batch_size=BATCH_SIZE)
 
     # Loading model
     model = TransformersModel(
@@ -73,8 +83,10 @@ if __name__ == "__main__":
     )
 
     # Train and test
-    # model.train()  # if training WITHOUT class weighting
-    model.train(class_weights=class_weights)  # if training WITH class weighting
+    if CLASS_WEIGHTING:
+        model.train(class_weights=class_weights)  # if training WITH class weighting
+    else:
+        model.train()  # if training WITHOUT class weighting
 
     # result = model.evaluate(metric=METRIC)
     # print(f"Final {METRIC}:", result)
