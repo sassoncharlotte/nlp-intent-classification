@@ -4,14 +4,6 @@ In this project, we compare different methods presented in our paper *Addressing
 
 ## 🏁 Getting started
 
-Command to retrieve the data (3 CSV files should be in a folder ```full_dataset```, itself in the ```data``` folder, at the root of the repository):
-
-```bash
-wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_1.csv
-wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_2.csv
-wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_3.csv
-```
-
 Create a ```Python``` environment (preferably running Python 3.9) and activate it using the following commands.
 ```bash
 conda create -n mynlp python=3.9
@@ -23,6 +15,14 @@ conda activate
 To access the directory, use:
 ```bash
 cd nlp-intent-classification
+```
+
+Command to retrieve the data (3 CSV files should be in a folder ```full_dataset```, itself in the ```data``` folder, at the root of the repository):
+
+```bash
+wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_1.csv
+wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_2.csv
+wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_3.csv
 ```
 
 You may then install the requirements using the command:
