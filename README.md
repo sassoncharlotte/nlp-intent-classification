@@ -17,7 +17,7 @@ To access the directory, use:
 cd nlp-intent-classification
 ```
 
-Command to retrieve the data (3 CSV files should be in a folder ```full_dataset```, itself in the ```data``` folder, at the root of the repository):
+Use this command to retrieve the data (3 CSV files should be in a folder ```full_dataset```, itself in the ```data``` folder, at the root of the repository):
 
 ```bash
 wget -P data/full_dataset/ https://storage.googleapis.com/gresearch/goemotions/data/full_dataset/goemotions_1.csv
