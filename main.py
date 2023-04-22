@@ -1,11 +1,15 @@
+import torch
 from torch.utils.data import DataLoader
 import seaborn as sns
 import datasets
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.utils.class_weight import compute_sample_weight
 import matplotlib.pyplot as plt
+from torch.utils.data.sampler import WeightedRandomSampler
+from sklearn.utils import compute_class_weight
 
-from preprocess import ProcessGoEmotions, TokenizeDataset
+
+from preprocess import ProcessGoEmotions, TokenizeDataset #, WeightedDataset
 from model import TransformersModel
 
 
@@ -14,22 +18,26 @@ PATH2 = "./data/full_dataset/goemotions_2.csv"
 PATH3 = "./data/full_dataset/goemotions_3.csv"
 PATHS = [PATH1]
 
-# LABEL = "emotions" # all 28 labels
-LABEL = "emotion_category" # positive negative ambiguous and neutral
+LABEL = "emotions"  # all 28 labels
+# LABEL = "emotion_category"  # positive, negative, ambiguous and neutral
 
 TOKENIZER_NAME = 'roberta-base'
 MODEL_NAME='roberta-base'
 METRIC = "accuracy"
 OPTIMIZER_NAME="AdamW"
-NUM_EPOCHS = 3
-BATCH_SIZE = 8
-NUM_INSTANCES = 20
+NUM_EPOCHS = 1
+BATCH_SIZE = 32
+NUM_INSTANCES = 500
 
 
 if __name__ == "__main__":
     # Loading train and test DataFrames
     process = ProcessGoEmotions(label_choice=LABEL)
     train, test = process.get_datasets(paths=PATHS, test_size = 0.2)
+
+    class_weights = compute_class_weight('balanced', classes=train['label'].unique(), y=train['label'])
+    # print('class_weights', class_weights)
+    class_weights = torch.from_numpy(class_weights).float()
 
     # Converting to datasets
     train_dataset = datasets.Dataset.from_pandas(train)
@@ -45,11 +53,14 @@ if __name__ == "__main__":
     small_train_dataset = tokenized_train.shuffle(seed=42).select(range(NUM_INSTANCES))
     small_eval_dataset = tokenized_test.shuffle(seed=42).select(range(NUM_INSTANCES))
 
-    # sample_weight = compute_sample_weight(class_weight='balanced', y=small_train_dataset["labels"])
+    # emotion_dataset = WeightedDataset(texts, labels, class_weights)
+
+    # Creating sampler
+    # sampler = WeightedRandomSampler(weights=emotion_dataset.class_weights, num_samples=len(emotion_dataset), replacement=True)
 
     # Creating dataloader
-    train_dataloader = DataLoader(small_train_dataset, shuffle=True, batch_size=BATCH_SIZE)
-    eval_dataloader = DataLoader(small_eval_dataset, batch_size=BATCH_SIZE)
+    train_dataloader = DataLoader(small_train_dataset, shuffle=True, batch_size=BATCH_SIZE) #, sampler=sampler)
+    eval_dataloader = DataLoader(small_eval_dataset, batch_size=BATCH_SIZE) #, sampler=sampler)
 
     # Loading model
     model = TransformersModel(
@@ -59,11 +70,11 @@ if __name__ == "__main__":
         eval_dataloader=eval_dataloader,
         num_labels=len(tokenized_train['labels'].unique()),
         model_name=MODEL_NAME
-        # sample_weights=sample_weight
     )
 
     # Train and test
-    model.train()
+    # model.train()  # if training WITHOUT class weighting
+    model.train(class_weights=class_weights)  # if training WITH class weighting
 
     # result = model.evaluate(metric=METRIC)
     # print(f"Final {METRIC}:", result)
