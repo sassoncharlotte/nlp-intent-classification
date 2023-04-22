@@ -41,65 +41,17 @@ class TransformersModel:
             name="linear", optimizer=self.optimizer, num_warmup_steps=0, num_training_steps=self.num_training_steps
         )
         return lr_scheduler
-
-
-    # def load_model(self, num_labels, model_name = "bert-base-cased"):
-    #     model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
-    #     model.to(self.device)
-    #     return model
     
     def load_model(self, num_labels, model_name="bert-base-cased"):
         model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
 
         # Freeze all layers except for the last one
         for name, param in model.named_parameters():
-            # print(name)
             if 'classifier' not in name:  # Only update the last layer
                 param.requires_grad = False
 
         model.to(self.device)
         return model
-
-
-    # def train(self):
-    #     progress_bar = tqdm(range(self.num_training_steps))
-
-    # # def exec_train(model,tokenizer,dataset,pond=False):
-    # #     #use device
-    # #     device  = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    # #     model.to(device)
-    # #     tok_train = tok_dataset(dataset,tokenizer)
-    # #     data_train = DataLoader(tok_train,batch_size=BATCH_SIZE,shuffle=True)
-    # #     nb_classes = len(set(dataset['Label']))
-    # #     if pond:
-    # #         class_weights = np.array([0 for i in range(nb_classes)])
-    # #         for i in dataset['Label']:
-    # #             class_weights[i] += 1
-    # #         max_nb_class = class_weights.max()
-    # #         class_weights = np.power(max_nb_class/class_weights,0.25)
-    # #         class_weights =  torch.Tensor(class_weights).to(device)
-    # #         print(class_weights)
-    # #     else:
-    # #         class_weights = torch.Tensor([1. for i in range(nb_classes)]).to(device)
-        
-    # #     criterion = torch.nn.CrossEntropyLoss(weight=class_weights)
-    # #     optimizer = AdamW(model.parameters(), lr=LEARNING_RATE)
-    #     #Training
-
-
-    #     self.model.train()
-    #     for epoch in range(self.num_epochs):
-    #         for batch in self.train_dataloader:
-    #             batch = {k: v.to(self.device) for k, v in batch.items()}
-    #             outputs = self.model(**batch)
-    #             loss = outputs.loss
-    #             loss.backward()
-
-    #             self.optimizer.step()
-    #             self.lr_scheduler.step()
-    #             self.optimizer.zero_grad()
-    #             progress_bar.set_postfix({"loss": loss.item()})
-    #             progress_bar.update(1)
 
     def train(self, class_weights=None):
         progress_bar = tqdm(range(self.num_training_steps))
