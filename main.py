@@ -22,8 +22,8 @@ PATHS = [PATH1]
 LABEL = "emotions"  # all 28 labels
 # LABEL = "emotion_category"  # positive, negative, ambiguous and neutral
 
-TOKENIZER_NAME = 'roberta-base'  # 'roberta-base'
-MODEL_NAME='roberta-base'  # 'roberta-base'
+TOKENIZER_NAME = 'roberta-base'
+MODEL_NAME='roberta-base'
 METRIC = "accuracy"
 OPTIMIZER_NAME="AdamW"
 NUM_EPOCHS = 1
