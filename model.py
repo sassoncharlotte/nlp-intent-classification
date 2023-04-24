@@ -80,7 +80,11 @@ class TransformersModel:
                 outputs = self.model(**batch)
 
             logits = outputs.logits
-            predictions = torch.argmax(logits, dim=-1)
+            probs = F.softmax(logits, dim=-1)
+            
+            _, topk_indices = torch.topk(probs, k=1, dim=-1)
+            predictions = topk_indices.squeeze(-1)
+
             metric.add_batch(predictions=predictions, references=batch["labels"])
             # progress_bar.set_postfix({f"{metric}": metric.compute()})
             progress_bar.update(1)
