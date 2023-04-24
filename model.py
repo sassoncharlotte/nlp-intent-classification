@@ -1,6 +1,7 @@
 from torch.optim import AdamW
 import evaluate
 import torch
+import torch.nn.functional as F
 from transformers import AutoModelForSequenceClassification, get_scheduler, RobertaModel
 from tqdm.auto import tqdm
 
@@ -17,7 +18,7 @@ class TransformersModel:
             model_name = "bert-base-cased"
         ) -> None:
 
-        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.device = torch.device("mps")   # if torch.cuda.is_available() else torch.device("cpu")
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader
         self.model = self.load_model(num_labels, model_name)
@@ -25,26 +26,16 @@ class TransformersModel:
         self.num_epochs = num_epochs
         self.num_training_steps = num_epochs * len(train_dataloader)
         self.optimizer = self.get_optimizer(optimizer_name)
-        self.lr_scheduler = self.get_scheduler()
-
 
     def get_optimizer(self, optimizer_name):
         if optimizer_name == "AdamW":
-            optimizer = AdamW(self.model.parameters(), lr=1e-3)
+            optimizer = AdamW(self.model.parameters(), lr=5e-5)
         else:
             raise NotImplementedError
         return optimizer
     
-
-    def get_scheduler(self):
-        lr_scheduler = get_scheduler(
-            name="linear", optimizer=self.optimizer, num_warmup_steps=0, num_training_steps=self.num_training_steps
-        )
-        return lr_scheduler
-    
     def load_model(self, num_labels, model_name="bert-base-cased"):
         model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=num_labels)
-        # model = RobertaModel.from_pretrained(model_name, num_labels=num_labels)
 
         # Freeze all layers except for the last one
         for name, param in model.named_parameters():
@@ -74,7 +65,6 @@ class TransformersModel:
                 loss.backward()
 
                 self.optimizer.step()
-                self.lr_scheduler.step()
                 self.optimizer.zero_grad()
                 progress_bar.set_postfix({"loss": loss.item()})
                 progress_bar.update(1)
@@ -106,11 +96,15 @@ class TransformersModel:
             batch = {k: v.to(self.device) for k, v in batch.items()}
             with torch.no_grad():
                 outputs = self.model(**batch)
-
             logits = outputs.logits
-            predictions = torch.argmax(logits, dim=-1)
-            all_predictions += list(predictions.numpy())
-            all_references += list(batch["labels"].numpy())
+            probs = F.softmax(logits, dim=-1)
+            
+            _, topk_indices = torch.topk(probs, k=1, dim=-1)
+            predictions = topk_indices.squeeze(-1)
+            # print('predictions', predictions)
+
+            all_predictions += list(predictions.cpu().numpy())
+            all_references += list(batch["labels"].cpu().numpy())
             progress_bar.update(1)
 
         return all_predictions, all_references
