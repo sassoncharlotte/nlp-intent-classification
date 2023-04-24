@@ -4,32 +4,6 @@ from sklearn.model_selection import train_test_split
 from transformers import AutoTokenizer
 from typing import List
 
-# import random
-# import pandas as pd
-
-# def undersample(df, target_col):
-#     # get class counts
-#     class_counts = df[target_col].value_counts()
-    
-#     # get size of minority class
-#     min_class_size = class_counts.min()
-    
-#     # create empty dataframe for undersampled data
-#     undersampled_df = pd.DataFrame(columns=df.columns)
-    
-#     # for each class
-#     for class_label in class_counts.index:
-#         # get instances of the class
-#         class_df = df[df[target_col] == class_label]
-        
-#         # randomly select instances to keep
-#         keep_indices = random.sample(range(len(class_df)), min_class_size)
-#         keep_df = class_df.iloc[keep_indices, :]
-        
-#         # add undersampled instances to the new dataframe
-#         undersampled_df = undersampled_df.append(keep_df)
-        
-#    return undersampled_df
 
 class ProcessGoEmotions:
     positive = [
@@ -110,9 +84,7 @@ class ProcessGoEmotions:
         if drop_neutral:
             print("Removing 'neutral'")
             self.df = self.df[self.df.label != mapping['neutral']]
-        
-        # self.df = undersample(self.df, 'label')
-        
+                
         train, test = train_test_split(self.df, test_size=test_size, stratify=self.df.label, random_state=42)
         train.reset_index(drop=True, inplace=True)
         test.reset_index(drop=True, inplace=True)
